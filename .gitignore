@@ -1,0 +1,14 @@
+/.venv
+/.venv-icl
+/baseline_metrics.csv
+/sba_clean.csv
+/sba_features.csv
+/tabpfn_contexts.csv
+/tabpfn_metrics.csv
+/tabpfn_test_predictions.csv
+/tabpfn_val_predictions.csv
+/test.csv
+/test_predictions.csv
+/train.csv
+/val.csv
+/archive
