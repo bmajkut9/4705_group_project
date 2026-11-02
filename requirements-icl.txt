@@ -1,0 +1,7 @@
+# TabPFN / TabICL scripts and experiments (.venv-icl, Python >= 3.10)
+numpy>=2.0
+pandas>=2.3
+scikit-learn>=1.6
+tabpfn==9.2.0
+tabicl==2.2.0
+torch==2.15.0

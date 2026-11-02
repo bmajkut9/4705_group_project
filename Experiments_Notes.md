@@ -46,6 +46,30 @@ Across the 3 draws of one run, test AUC varies by about 0.005-0.007 (standard de
 - **4-digit NAICS encoding:** +0.006 test, +0.004 val. In the right direction on both, but inside the noise. Not a clear win.
 - **TabICL:** slightly below TabPFN (0.690 vs 0.695 test), with worse Brier.
 
+## TabPFN vs XGBoost by test year
+
+Compared on the same 5,000 test loans as the baseline run (XGBoost scores 0.691 there, vs 0.689 on the full test set). Gap = TabPFN minus XGBoost AUC, with a 95% paired-bootstrap interval.
+
+| Test year | Default rate | TabPFN AUC | XGBoost AUC | Gap (95% CI) |
+|---|---|---|---|---|
+| FY2006 | 35% | 0.684 | 0.686 | -0.002 (-0.016, +0.011) |
+| FY2007 | 43% | 0.661 | 0.666 | -0.004 (-0.017, +0.009) |
+| FY2008 | 41% | 0.721 | 0.710 | +0.011 (-0.010, +0.033) |
+| FY2009 | 21% | 0.674 | 0.603 | **+0.071 (+0.021, +0.129)** |
+| FY2010 | 16% | 0.644 | 0.551 | **+0.092 (+0.019, +0.169)** |
+| FY2006-10 | 36% | 0.695 | 0.691 | +0.004 (-0.005, +0.012) |
+
+- **Peak crisis years (FY2006-2008):** they tie. In the years with the highest default rates, TabPFN has no advantage.
+- **Later vintages (FY2009-2010):** TabPFN is clearly ahead. XGBoost drops close to a coin flip (0.55-0.60), while TabPFN holds at 0.64-0.67.
+- **Interpretation:** the data fits "TabPFN degrades less as the data moves farther from the training years". That is not the same as "better in a crisis". I haven't tested why.
+
+Caveats:
+- FY2009 and FY2010 are small (89 and 61 defaults in the sample).
+- I looked at six year-slices after the fact and two came out significant, which is weaker evidence than a pattern predicted in advance.
+- One run, one eval sample, three context draws.
+- Late-approved loans have had little time to default (right-censoring), which can distort AUC for any model.
+- To firm this up: rerun with `--eval-n 0` (score all test loans) and recheck FY2009-2010. Not done.
+
 ## Takeaways
 
 1. The model's main weakness is calibration under the crisis shift (predicts ~17% vs 36% actual), not ranking. Every variant is stuck near AUC 0.68-0.70, and XGBoost is around 0.69.
