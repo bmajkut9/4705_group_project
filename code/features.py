@@ -2,7 +2,7 @@
 Build model features from the cleaned SBA file.
 
 Usage:
-    python build_features.py sba_clean.csv sba_features.csv
+    python features.py sba_clean.csv sba_features.csv
 
 Input:  output of clean_sba.py
 Output: one row per loan with

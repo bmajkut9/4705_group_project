@@ -12,7 +12,12 @@ from sklearn.model_selection import train_test_split
 from xgboost import XGBClassifier
 
 df = pd.read_csv(sys.argv[1])
+df["sba_share"] = (df["SBA_Appv"] / df["GrAppv"]).clip(0, 1)
 y = df["default"]
+
+# Text columns -> pandas categories so XGBoost can use them directly
+for c in df.select_dtypes("object"):
+    df[c] = df[c].astype("category")
 
 # Other approval-time columns, for comparison (numeric only, no encoding)
 OTHER = ["GrAppv", "SBA_Appv", "NoEmp", "NewExist", "CreateJob",
@@ -21,7 +26,7 @@ OTHER = ["GrAppv", "SBA_Appv", "NoEmp", "NewExist", "CreateJob",
 
 def auc(cols, train_idx, test_idx):
     m = XGBClassifier(n_estimators=200, max_depth=4, learning_rate=0.1,
-                      random_state=0, n_jobs=-1)
+                      random_state=0, n_jobs=-1, enable_categorical=True)
     m.fit(df.loc[train_idx, cols], y[train_idx])
     return roc_auc_score(y[test_idx], m.predict_proba(df.loc[test_idx, cols])[:, 1])
 
@@ -47,3 +52,22 @@ tbl = (df.assign(term=pd.cut(df["Term"], bins, labels=labels))
          .agg(loans="size", default_rate="mean"))
 print("\nDefault rate by term:")
 print(tbl.round(3).to_string())
+
+
+# ---- Every column on its own: anything near Term's 0.945 is suspect ----
+# Not tested: the target, ApprovalDate/ApprovalFY (used for splitting).
+# Zip, NAICS, FranchiseCode are numeric codes, so XGBoost treats them as
+# ordered numbers, not categories.
+SKIP = {"default", "ApprovalDate", "ApprovalFY"}
+singles = [c for c in df.columns if c not in SKIP]
+
+rows = []
+for c in singles:
+    rows.append({"column": c,
+                 **{n: auc([c], tr, te) for n, (tr, te) in splits.items()}})
+res = (pd.DataFrame(rows).set_index("column")
+         .rename(columns={"random 80/20": "random", 
+                          "time (train FY<=2003, test FY2004+)": "time"})
+         .sort_values("time", ascending=False))
+print("\nSingle-column ROC-AUC (0.5 = no signal, Term = 0.945):")
+print(res.round(3).to_string())
