@@ -13,3 +13,5 @@
 /val.csv
 /archive
 /data
+/experiments/results
+code/__pycache__/tabular_icl.cpython-312.pyc

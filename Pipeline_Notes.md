@@ -161,5 +161,32 @@ baselines.py - logistic regression + XGBoost on the time-based split
 - XGBoost: native categories, early stopping on val
 - Outputs: baseline_metrics.csv, test_predictions.csv
 
+Metrics (reported per segment: all, new business, existing business, each FY)
+- roc_auc: ranking quality, 0.5 = coin flip
+- pr_auc: precision-recall AUC, a random model scores the default rate
+- brier: mean squared error of the probabilities, lower is better
+- default_rate vs mean_pred: if these are far apart the model is poorly calibrated
+
+Because defaults rise a lot in the crisis years, test AUC and default rate are compared per FY, not just overall
+
+
+
+# Tabular ICL (TabPFN / TabICL)
+
+tabular_icl.py - pretrained tabular models, run in .venv-icl (Python >= 3.10)
+
+- No training. Each "draw" samples a random context of train loans (stratified on default) and the model predicts every val/test loan from that context
+- Predictions are averaged over the draws (p_mean), the spread between draws is p_std = context-sampling noise (RQ2)
+- Defaults are sized for a laptop dry run: context 10,000 loans, 5 draws, 20,000 val/test loans scored. TabPFN on CPU is capped at 5,000 context rows, so a full run needs a GPU
+- Same features and same train/val/test files as baselines.py. No scaling or one-hot in the script, categories are passed as pandas categories (fixed list from train, unseen -> blank)
+- Outputs: {model}_val_predictions.csv, {model}_test_predictions.csv, {model}_contexts.csv, {model}_metrics.csv
+
+```
+python3 code/tabular_icl.py --model tabpfn
+python3 code/tabular_icl.py --model tabicl
+```
+
+now that we have the pipeline built we can try new things and compare the results
+
 
 
